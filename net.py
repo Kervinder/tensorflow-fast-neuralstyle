@@ -78,4 +78,4 @@ class FastStyleNet():
         # print(h.get_shape().as_list())
         y = deconv2d(h, self.d3, name='t_deconv3')
         # print(y.get_shape().as_list())
-        return tf.mul((tf.tanh(y) + 1), tf.constant(127.5, tf.float32, shape=y.get_shape()), name='output')
+        return tf.multiply((tf.tanh(y) + 1), tf.constant(127.5, tf.float32, shape=y.get_shape()), name='output')
