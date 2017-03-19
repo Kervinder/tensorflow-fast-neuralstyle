@@ -5,7 +5,7 @@ from PIL import Image
 import tensorflow as tf
 import time
 
-from tf_net import *
+from net import *
 sys.path.append(os.path.join(os.path.dirname(sys.path[0]), "./"))
 from custom_vgg16 import *
 
