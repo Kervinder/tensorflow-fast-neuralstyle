@@ -17,11 +17,13 @@ Fast artistic style transfer by using feed forward network.
 ## Requirement
 - [Tensorflow 1.0](https://github.com/tensorflow/tensorflow)
 - [Pillow](https://github.com/python-pillow/Pillow)
-- [numpy](https://github.com/numpy/numpy)
+- [Numpy](https://github.com/numpy/numpy)
+- [Scipy](https://github.com/scipy/scipy)
 
 
 ## Prerequisite
-Download VGG16 model and convert it into smaller file so that we use only the convolutional layers which are 10% of the entire model. In this implementation, the VGG model part were based on [Tensorflow VGG16 and VGG19](https://github.com/machrisaa/tensorflow-vgg).
+Download VGG16 model (vgg16.npy), and the custom_vgg16.py would extract only the convolutional layers, which are 10% of the entire model. 
+In this implementation, the VGG model part was based on [Tensorflow VGG16 and VGG19](https://github.com/machrisaa/tensorflow-vgg). Please add this as a submodule, either name the directory as `tensorflow_vgg` or anything you want, as long as they matched in `custom_vgg16.py:6`.
 
 ## Train
 Need to train one image transformation network model per one style target.
