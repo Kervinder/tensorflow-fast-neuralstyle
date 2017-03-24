@@ -86,7 +86,7 @@ else:
 with tf.device(device_):
 
     model = FastStyleNet()
-    saver = tf.train.Saver()
+    saver = tf.train.Saver(restore_sequentially=True)
     saver_def = saver.as_saver_def()
 
     inputs = tf.placeholder(tf.float32, shape=[batchsize, 224, 224, 3])
@@ -151,7 +151,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_plac
             feed_dict = {inputs: imgs, target:styles_}
             loss_, _= sess.run([loss, train_step,], feed_dict=feed_dict)
             print('(epoch {}) batch {}/{}... training loss is...{}'.format(epoch, i, n_iter-1, loss_[0]))
-    saver.save(sess, directory + args.output + '.model', write_meta_graph=False)
+    saver.save(sess, directory, write_meta_graph=False,  latest_filename=args.output+'.model')
 
 print('training time: {} sec'.format(time.time() - s_time))
 
