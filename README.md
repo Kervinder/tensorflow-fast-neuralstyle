@@ -33,8 +33,13 @@ python train.py -s <style_image_path> -d <training_dataset_path> -g 0
 ```
 
 ## Generate
+
+**NOTES!**
+1. Please provide the model **DIRECTORY** instead of model file. 
+2. Make sure you put postfix for your output image. (E.g. *.jpg, *.png...etc.)
+
 ```
-python generate.py <input_image_path> -m <model_path> -o <output_image_path>
+python generate.py <input_image_path> -m <model_directory> -o <output_image_path>
 ```
 
 ## Difference from paper
