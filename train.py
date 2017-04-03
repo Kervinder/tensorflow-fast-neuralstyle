@@ -9,7 +9,7 @@ from net import *
 sys.path.append(os.path.join(os.path.dirname(sys.path[0]), "./"))
 from custom_vgg16 import *
 
-directory = './models/'
+
 # gram matrix per layer
 def gram_matrix(x):
     assert isinstance(x, tf.Tensor)
@@ -84,7 +84,6 @@ else:
     device_ = '/cpu:0'
 
 with tf.device(device_):
-
     model = FastStyleNet()
     saver = tf.train.Saver(restore_sequentially=True)
     saver_def = saver.as_saver_def()
@@ -130,9 +129,12 @@ with tf.device(device_):
 # for calculating time
 s_time = time.time()
 
+var_list={}
 with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)) as sess:
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+
+    model_directory = './models/'
+    if not os.path.exists(model_directory):
+        os.makedirs(model_directory)
 
     # training
     tf.initialize_all_variables().run()
@@ -151,8 +153,23 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_plac
             feed_dict = {inputs: imgs, target:styles_}
             loss_, _= sess.run([loss, train_step,], feed_dict=feed_dict)
             print('(epoch {}) batch {}/{}... training loss is...{}'.format(epoch, i, n_iter-1, loss_[0]))
-    saver.save(sess, directory, write_meta_graph=False,  latest_filename=args.output+'.model')
+    saver.save(sess, model_directory, write_meta_graph=False,  latest_filename=args.output+'.model')
 
-print('training time: {} sec'.format(time.time() - s_time))
+    for var in tf.all_variables():
+        var_list[var.name] = var.eval()
 
 
+Model = tf.Graph()
+with Model.as_default():
+    with tf.device(device_):
+        inputs = tf.placeholder(tf.float32, shape=[1, 224, 224, 3], name='input')
+        # feed dictionary into Transform Net, "train=False" would save all values as constants.
+        transform = FastStyleNet(train=False, data_dict=var_list)
+        outputs = transform(inputs)
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)) as sess:
+
+        save_path = './graphs/'
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        print('saving pb...')
+        tf.train.write_graph(sess.graph_def, save_path, args.output + '.pb', as_text=False)
