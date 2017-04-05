@@ -28,6 +28,11 @@ In this implementation, the VGG model part was based on [Tensorflow VGG16 and VG
 Need to train one image transformation network model per one style target.
 According to the paper, the models are trained on the [Microsoft COCO dataset](http://mscoco.org/dataset/#download). 
 Also, it will save the transformation model, including the trained weights, for later use (in C++) in ```graphs``` directory, while the checkpoint files would be saved in ```models``` directory. 
+
+**NOTES!**
+Due to the new version of tensorflow, the checkpoint files containing weights would look something like `<model_name>.data-xxxx-of-xxxxx`
+
+
 ```
 python train.py -s <style_image_path> -d <training_dataset_path> -g 0
 ```
