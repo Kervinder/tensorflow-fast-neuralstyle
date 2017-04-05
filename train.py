@@ -84,6 +84,7 @@ else:
     device_ = '/cpu:0'
 
 with tf.device(device_):
+    
     model = FastStyleNet()
     saver = tf.train.Saver(restore_sequentially=True)
     saver_def = saver.as_saver_def()
@@ -137,7 +138,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_plac
         os.makedirs(model_directory)
 
     # training
-    tf.initialize_all_variables().run()
+    tf.global_variables_initializer().run()
 
     if args.input:
         saver.restore(sess, args.input)
@@ -153,9 +154,9 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_plac
             feed_dict = {inputs: imgs, target:styles_}
             loss_, _= sess.run([loss, train_step,], feed_dict=feed_dict)
             print('(epoch {}) batch {}/{}... training loss is...{}'.format(epoch, i, n_iter-1, loss_[0]))
-    saver.save(sess, model_directory, write_meta_graph=False,  latest_filename=args.output+'.model')
+    saver.save(sess, model_directory + args.output, write_meta_graph=False)
 
-    for var in tf.all_variables():
+    for var in tf.global_variables():
         var_list[var.name] = var.eval()
 
 
