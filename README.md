@@ -30,7 +30,7 @@ According to the paper, the models are trained on the [Microsoft COCO dataset](h
 Also, it will save the transformation model, including the trained weights, for later use (in C++) in ```graphs``` directory, while the checkpoint files would be saved in ```models``` directory. 
 
 **NOTES!**
-Due to the new version of tensorflow, the checkpoint files containing weights would look something like `<model_name>.data-xxxx-of-xxxxx`
+Due to the new version of tensorflow, the checkpoint files containing weights would look something like `<model_name>.data-xxxx-of-xxxxx`. For a morde detailed description, refer to the [official page](https://www.tensorflow.org/api_docs/python/tf/train/Saver).
 
 
 ```
