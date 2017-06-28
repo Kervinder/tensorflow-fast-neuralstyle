@@ -26,7 +26,7 @@ class custom_Vgg16(vgg16.Vgg16):
         self.data_dict = data_dict
 
         # start_time = time.time()
-        print ("build model started")
+        
         # rgb_scaled = rgb * 255.0
         rgb_scaled = rgb
         # Convert RGB to BGR

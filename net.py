@@ -5,44 +5,50 @@ def weight_variable(shape, name=None):
     # initialize weighted variables.
     initial = tf.truncated_normal(shape, stddev=0.001)
     return tf.Variable(initial, name=name)
+
 def conv2d(x, W, strides=[1, 1, 1, 1], p='SAME', name=None):
     # set convolution layers.
     assert isinstance(x, tf.Tensor)
     return tf.nn.conv2d(x, W, strides=strides, padding=p, name=name)
+
 def batch_norm(x):
     assert isinstance(x, tf.Tensor)
     # reduce dimension 1, 2, 3, which would produce batch mean and batch variance.
     mean, var = tf.nn.moments(x, axes=[1, 2, 3])
     return tf.nn.batch_normalization(x, mean, var, 0, 1, 1e-5)
+
 def relu(x):
     assert isinstance(x, tf.Tensor)
     return tf.nn.relu(x)
+
 def deconv2d(x, W, strides=[1, 1, 1, 1], p='SAME', name=None):
     assert isinstance(x, tf.Tensor)
     _, _, c, _ = W.get_shape().as_list()
     b, h, w, _ = x.get_shape().as_list()
-    return tf.nn.conv2d_transpose(x, W, [b, strides[1]*h, strides[1]*w, c], strides=strides, padding=p, name=name)
+    return tf.nn.conv2d_transpose(x, W, [b, strides[1] * h, strides[1] * w, c], strides=strides, padding=p, name=name)
+
 def max_pool_2x2(x):
     assert isinstance(x, tf.Tensor)
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
+
 class ResidualBlock():
     def __init__(self, idx, ksize=3, train=False, data_dict=None):
         if train:
-            self.W1 = weight_variable([ksize, ksize, 128, 128], name='R'+str(idx)+'_conv1_w')
-            self.W2 = weight_variable([ksize, ksize, 128, 128], name='R'+str(idx)+'_conv2_w')
+            self.W1 = weight_variable([ksize, ksize, 128, 128], name='R'+ str(idx) + '_conv1_w')
+            self.W2 = weight_variable([ksize, ksize, 128, 128], name='R'+ str(idx) + '_conv2_w')
         else:
-            self.W1 = tf.constant(data_dict['R'+str(idx)+'_conv1_w:0'])
-            self.W2 = tf.constant(data_dict['R'+str(idx)+'_conv2_w:0'])
+            self.W1 = tf.constant(data_dict['R' + str(idx) + '_conv1_w:0'])
+            self.W2 = tf.constant(data_dict['R' + str(idx) + '_conv2_w:0'])
     def __call__(self, x, idx, strides=[1, 1, 1, 1]):
-        h = relu(batch_norm(conv2d(x, self.W1, strides, name='R'+str(idx)+'_conv1')))
-        h = batch_norm(conv2d(h, self.W2, name='R'+ str(idx) + '_conv2'))
+        h = relu(batch_norm(conv2d(x, self.W1, strides, name='R' + str(idx) + '_conv1')))
+        h = batch_norm(conv2d(h, self.W2, name='R' + str(idx) + '_conv2'))
         return x + h
 
 
 class FastStyleNet():
     def __init__(self, train=True, data_dict=None):
-        print('initialize transform network...')
+
         if train:
             self.c1 = weight_variable([9, 9, 3, 32], name='t_conv1_w')
             self.c2 = weight_variable([4, 4, 32, 64], name='t_conv2_w')

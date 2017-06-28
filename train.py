@@ -40,58 +40,62 @@ parser.add_argument('--style_image', '-s', type=str, required=True,
                     help='style image path')
 parser.add_argument('--batchsize', '-b', type=int, default=1,
                     help='batch size (default value is 1)')
-parser.add_argument('--input', '-i', default=None, type=str,
-                    help='input model file path without extension')
-parser.add_argument('--output', '-o', default='out', type=str,
-                    help='output model file path without extension')
+parser.add_argument('--input', '-i', default=None, type=int,
+                    help='the global step of checkpoint file desired to restore.')
 parser.add_argument('--lambda_tv', '-l_tv', default=10e-4, type=float,
                     help='weight of total variation regularization according to the paper to be set between 10e-4 and 10e-6.')
 parser.add_argument('--lambda_feat', '-l_feat', default=1e0, type=float)
 parser.add_argument('--lambda_style', '-l_style', default=1e1, type=float)
 parser.add_argument('--epoch', '-e', default=2, type=int)
 parser.add_argument('--lr', '-l', default=1e-3, type=float)
-parser.add_argument('--checkpoint', '-c', default=0, type=int)
 args = parser.parse_args()
 
 data_dict = loadWeightsData('./vgg16.npy')
-batchsize = args.batchsize
 
-n_epoch = args.epoch
+batchsize = args.batchsize
+gpu = args.gpu
+dataset = args.dataset
+epochs = args.epoch
+learning_rate = args.lr
+input_ckpt_num = args.input
 lambda_tv = args.lambda_tv
 lambda_f = args.lambda_feat
 lambda_s = args.lambda_style
-output = args.output
+style_image = args.style_image
+
+checkpoint_file_name = style_image.split(os.sep)[-1]
 
 fpath = os.listdir(args.dataset)
 imagepaths = []
 for fn in fpath:
     base, ext = os.path.splitext(fn)
     if ext == '.jpg' or ext == '.png':
-        imagepath = os.path.join(args.dataset,fn)
+        imagepath = os.path.join(dataset, fn)
         imagepaths.append(imagepath)
-n_data = len(imagepaths)
-print ('num traning images:', n_data)
-n_iter = int(n_data / batchsize)
-print (n_iter, 'iterations,', n_epoch, 'epochs')
+data_len = len(imagepaths)
+iterations = int(data_len / batchsize)
+print ('Number of traning images: {}'.format(data_len))
+print ('{} epochs, {} iterations per epoch'.format(epochs, iterations))
 
-style_ = np.asarray(Image.open(args.style_image).convert('RGB').resize((224,224)), dtype=np.float32)
+style_ = np.asarray(Image.open(style_image).convert('RGB').resize((224, 224)), dtype=np.float32)
 styles_ = [style_ for x in range(batchsize)]
 
-if args.gpu > -1:
-    device_ = '/gpu:{}'.format(args.gpu)
+if gpu > -1:
+    device_ = '/gpu:{}'.format(gpu)
     print(device_)
 else:
     device_ = '/cpu:0'
 
 with tf.device(device_):
     
-    model = FastStyleNet()
+    inputs = tf.placeholder(tf.float32, shape=[batchsize, 224, 224, 3], name='input')
+    net = FastStyleNet()
     saver = tf.train.Saver(restore_sequentially=True)
     saver_def = saver.as_saver_def()
 
-    inputs = tf.placeholder(tf.float32, shape=[batchsize, 224, 224, 3])
+    
     target = tf.placeholder(tf.float32, shape=[batchsize, 224, 224, 3])
-    outputs = model(inputs)
+    outputs = net(inputs)
 
     # style target feature
     # compute gram maxtrix of style target
@@ -125,52 +129,48 @@ with tf.device(device_):
     loss = loss_s + loss_f + loss_tv
 
     # optimizer
-    train_step = tf.train.AdamOptimizer(args.lr).minimize(loss)
+    train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
-# for calculating time
-s_time = time.time()
-
-var_list={}
 with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)) as sess:
 
-    model_directory = './models/'
-    if not os.path.exists(model_directory):
-        os.makedirs(model_directory)
+    ckpt_directory = './ckpts/'
+    if not os.path.exists(ckpt_directory):
+        os.makedirs(ckpt_directory)
 
     # training
     tf.global_variables_initializer().run()
 
-    if args.input:
-        saver.restore(sess, args.input)
-        print ('restoring model....')
+    if input_ckpt_num:
+        saver.restore(sess, ckpt_directory + checkpoint_file_name +  '-{}'.format(input_ckpt_num))
+        print ('Checkpoint {} restored.'.format(input_ckpt_num))
 
-    for epoch in range(n_epoch):
-        print ('epoch', epoch)
+    for epoch in range(1, epochs + 1):
         imgs = np.zeros((batchsize, 224, 224, 3), dtype=np.float32)
-        for i in range(n_iter):
+        for i in range(iterations):
             for j in range(batchsize):
-                p = imagepaths[i*batchsize + j]
+                p = imagepaths[i * batchsize + j]
                 imgs[j] = np.asarray(Image.open(p).convert('RGB').resize((224, 224)), np.float32)
-            feed_dict = {inputs: imgs, target:styles_}
+            feed_dict = {inputs: imgs, target: styles_}
             loss_, _= sess.run([loss, train_step,], feed_dict=feed_dict)
-            print('(epoch {}) batch {}/{}... training loss is...{}'.format(epoch, i, n_iter-1, loss_[0]))
-    saver.save(sess, model_directory + args.output, write_meta_graph=False)
+            print('[epoch {}/{}] batch {}/{}... loss: {}'.format(epoch, epochs, i + 1, iterations, loss_[0]))    
+        saver.save(sess, ckpt_directory + checkpoint_file_name, global_step=epoch)
+        saver.export_meta_graph(filename='test_save_graph')
 
-    for var in tf.global_variables():
-        var_list[var.name] = var.eval()
+    # for var in tf.global_variables():
+    #     var_list[var.name] = var.eval()
 
 
-Model = tf.Graph()
-with Model.as_default():
-    with tf.device(device_):
-        inputs = tf.placeholder(tf.float32, shape=[1, 224, 224, 3], name='input')
-        # feed dictionary into Transform Net, "train=False" would save all values as constants.
-        transform = FastStyleNet(train=False, data_dict=var_list)
-        outputs = transform(inputs)
-    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)) as sess:
+# graph = tf.Graph()
+# with graph.as_default():
+#     with tf.device(device_):
+#         inputs = tf.placeholder(tf.float32, shape=[1, 224, 224, 3], name='input')
+#         # feed dictionary into Transform Net, "train=False" would save all values as constants.
+#         transform = FastStyleNet(train=False, data_dict=var_list)
+#         outputs = transform(inputs)
+#     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)) as sess:
 
-        save_path = './graphs/'
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        print('saving pb...')
-        tf.train.write_graph(sess.graph_def, save_path, args.output + '.pb', as_text=False)
+#         save_path = './graphs/'
+#         if not os.path.exists(save_path):
+#             os.makedirs(save_path)
+#         print('saving pb...')
+#         tf.train.write_graph(sess.graph_def, save_path, args.output + '.pb', as_text=False)
