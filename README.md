@@ -24,7 +24,7 @@ Fast artistic style transfer by using feed forward network.
 ## Prerequisite
 In this implementation, the VGG model part was based on [Tensorflow VGG16 and VGG19](https://github.com/machrisaa/tensorflow-vgg). Please add this as a submodule and follow the instructions there to have vgg16 model. Make sure the name of the module in your project matches the one in line 6 of`custom_vgg16.py`.
 
-## Train
+## Train a style model
 Need to train one image transformation network model per one style target.
 According to the paper, the models are trained on the [Microsoft COCO dataset](http://mscoco.org/dataset/#download). 
 Also, it will save the transformation model, including the trained weights, for later use (in C++) in ```pbs``` directory, while the checkpoint files would be saved in ```ckpts/<style_name>/```. 
@@ -41,7 +41,7 @@ python train.py -s <style_image_path> -d <training_dataset_directory> -g 0
 python train.py -s <style_image_path> -d  <training_dataset_directory> -c <checkpoint_to_load>
 ```
 
-## Generate
+## Generate a stylized image
 
 - Load from .pb file is currently not supported yet.
 - By default, the latest checkpoint file is used (negative value for the checkpoint argument). 
@@ -49,7 +49,7 @@ python train.py -s <style_image_path> -d  <training_dataset_directory> -c <check
 python generate.py <input_image_path> -s <style_name> -o <output_image_path> -c <checkpoint_to_load>
 ```
 
-## Difference from paper
+## Difference between implementation and paper
 - Convolution kernel size 4 instead of 3.
 - Training with batchsize(n >= 2) causes unstable result.
 
