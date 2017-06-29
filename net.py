@@ -34,12 +34,8 @@ def max_pool_2x2(x):
 
 class ResidualBlock():
     def __init__(self, idx, ksize=3, train=False, data_dict=None):
-        if train:
-            self.W1 = weight_variable([ksize, ksize, 128, 128], name='R'+ str(idx) + '_conv1_w')
-            self.W2 = weight_variable([ksize, ksize, 128, 128], name='R'+ str(idx) + '_conv2_w')
-        else:
-            self.W1 = tf.constant(data_dict['R' + str(idx) + '_conv1_w:0'])
-            self.W2 = tf.constant(data_dict['R' + str(idx) + '_conv2_w:0'])
+        self.W1 = weight_variable([ksize, ksize, 128, 128], name='R'+ str(idx) + '_conv1_w')
+        self.W2 = weight_variable([ksize, ksize, 128, 128], name='R'+ str(idx) + '_conv2_w')
     def __call__(self, x, idx, strides=[1, 1, 1, 1]):
         h = relu(batch_norm(conv2d(x, self.W1, strides, name='R' + str(idx) + '_conv1')))
         h = batch_norm(conv2d(h, self.W2, name='R' + str(idx) + '_conv2'))
