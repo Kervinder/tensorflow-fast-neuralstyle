@@ -48,31 +48,17 @@ class ResidualBlock():
 
 class FastStyleNet():
     def __init__(self, train=True, data_dict=None):
-
-        if train:
-            self.c1 = weight_variable([9, 9, 3, 32], name='t_conv1_w')
-            self.c2 = weight_variable([4, 4, 32, 64], name='t_conv2_w')
-            self.c3 = weight_variable([4, 4, 64, 128], name='t_conv3_w')
-            self.r1 = ResidualBlock(1, train=train)
-            self.r2 = ResidualBlock(2, train=train)
-            self.r3 = ResidualBlock(3, train=train)
-            self.r4 = ResidualBlock(4, train=train)
-            self.r5 = ResidualBlock(5, train=train)
-            self.d1 = weight_variable([4, 4, 64, 128], name='t_dconv1_w')
-            self.d2 = weight_variable([4, 4, 32, 64], name='t_dconv2_w')
-            self.d3 = weight_variable([9, 9, 3, 32], name='t_dconv3_w')
-        else:
-            self.c1 = tf.constant(data_dict['t_conv1_w:0'])
-            self.c2 = tf.constant(data_dict['t_conv2_w:0'])
-            self.c3 = tf.constant(data_dict['t_conv3_w:0'])
-            self.r1 = ResidualBlock(1, train=train, data_dict=data_dict)
-            self.r2 = ResidualBlock(2, train=train, data_dict=data_dict)
-            self.r3 = ResidualBlock(3, train=train, data_dict=data_dict)
-            self.r4 = ResidualBlock(4, train=train, data_dict=data_dict)
-            self.r5 = ResidualBlock(5, train=train, data_dict=data_dict)
-            self.d1 = tf.constant(data_dict['t_dconv1_w:0'])
-            self.d2 = tf.constant(data_dict['t_dconv2_w:0'])
-            self.d3 = tf.constant(data_dict['t_dconv3_w:0'])            
+        self.c1 = weight_variable([9, 9, 3, 32], name='t_conv1_w')
+        self.c2 = weight_variable([4, 4, 32, 64], name='t_conv2_w')
+        self.c3 = weight_variable([4, 4, 64, 128], name='t_conv3_w')
+        self.r1 = ResidualBlock(1, train=train)
+        self.r2 = ResidualBlock(2, train=train)
+        self.r3 = ResidualBlock(3, train=train)
+        self.r4 = ResidualBlock(4, train=train)
+        self.r5 = ResidualBlock(5, train=train)
+        self.d1 = weight_variable([4, 4, 64, 128], name='t_dconv1_w')
+        self.d2 = weight_variable([4, 4, 32, 64], name='t_dconv2_w')
+        self.d3 = weight_variable([9, 9, 3, 32], name='t_dconv3_w')            
     def __call__(self, h):
         h = batch_norm(relu(conv2d(h, self.c1, name='t_conv1')))
         h = batch_norm(relu(conv2d(h, self.c2, strides=[1, 2, 2, 1], name='t_conv2')))
