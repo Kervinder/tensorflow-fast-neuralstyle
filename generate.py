@@ -1,42 +1,52 @@
 import numpy as np
 import argparse
 import tensorflow as tf
+import os
 from PIL import Image
-import time
-from tensorflow.python.platform import gfile
-from net import *
 
 parser = argparse.ArgumentParser(description='Real-time style transfer image generator')
-parser.add_argument('input')
+parser.add_argument('--input', '-i', type=str, help='content image')
 parser.add_argument('--gpu', '-g', default=-1, type=int,
                     help='GPU ID (negative value indicates CPU)')
-parser.add_argument('--model', '-m', default='models/style.model', type=str)
-parser.add_argument('--out', '-o', default='out.jpg', type=str)
+parser.add_argument('--style', '-s', default=None, type=str, help='Style model name')
+parser.add_argument('--ckpt', '-c', default=1, type=int, help='checkpoint to be loaded')
+parser.add_argument('--out', '-o', default='stylized_image.jpg', type=str, help='Stylized image\'s name')
 args = parser.parse_args()
 
-img = np.asarray(Image.open(args.input).convert('RGB'), dtype=np.float32)
-input_ = img.reshape((1,) + img.shape)
+if not os.path.exists('./images/output/'):
+        os.makedirs('./images/output/')
+
+outfile_path = './images/output/' + args.out
+content_image_path = args.input
+style_name = args.style
+ckpt = args.ckpt
+
+original_image = Image.open(content_image_path).convert('RGB')
+
+img = np.asarray(original_image.resize((224, 224)), dtype=np.float32)
+shaped_input = img.reshape((1,) + img.shape)
 
 if args.gpu > -1:
     device_ = '/gpu:{}'.format(args.gpu)
     print(device_)
 else:
     device_ = '/cpu:0'
-with tf.device(device_):
-    transform = FastStyleNet()
-    image =  tf.placeholder(tf.float32, [1, input_.shape[1], input_.shape[2], 3])
-    output = transform(image)
-    saver = tf.train.Saver()
-s_time = time.time()
 
-with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)) as sess:
+
+with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
     # Restore variables from disk.
-    saver.restore(sess, args.model)
-    print("Model restored.")
-    out = sess.run(output, feed_dict={image: input_})
+    saver = tf.train.import_meta_graph('./ckpts/{}-{}.meta'.format(style_name, ckpt))
+    saver.restore(sess, './ckpts/{}-{}'.format(style_name, ckpt))
+    # saver.restore(sess, args.model)
+    # print("Model restored.")
+    graph = tf.get_default_graph()
+    input_image = graph.get_tensor_by_name('input:0')
+    output = graph.get_tensor_by_name('output:0')
+    out = sess.run(output, feed_dict={input_image: shaped_input})
     
-print('time: {} sec'.format(time.time() - s_time))
 out = out.reshape((out.shape[1:]))
 im = Image.fromarray(np.uint8(out))
-im.save(args.out)
+
+im = im.resize(original_image.size, resample=Image.LANCZOS)
+im.save(outfile_path)
     
