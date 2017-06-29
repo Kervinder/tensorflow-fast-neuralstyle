@@ -2,6 +2,7 @@ import numpy as np
 import os, sys
 import argparse
 from PIL import Image
+from freeze_graph import freeze_graph
 import tensorflow as tf
 import time
 
@@ -48,6 +49,7 @@ parser.add_argument('--lambda_feat', '-l_feat', default=1e0, type=float)
 parser.add_argument('--lambda_style', '-l_style', default=1e1, type=float)
 parser.add_argument('--epoch', '-e', default=2, type=int)
 parser.add_argument('--lr', '-l', default=1e-3, type=float)
+parser.add_argument('--pb', '-pb', default=True, type=bool, help='save a pb format as well.')
 args = parser.parse_args()
 
 data_dict = loadWeightsData('./vgg16.npy')
@@ -62,8 +64,9 @@ lambda_tv = args.lambda_tv
 lambda_f = args.lambda_feat
 lambda_s = args.lambda_style
 style_image = args.style_image
+save_pb = args.pb
 
-ckpt_file_name, _ = os.path.splitext(style_image.split(os.sep)[-1])
+style_name, _ = os.path.splitext(style_image.split(os.sep)[-1])
 
 fpath = os.listdir(args.dataset)
 imagepaths = []
@@ -133,7 +136,7 @@ with tf.device(device_):
 
 with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 
-    ckpt_directory = './ckpts/'
+    ckpt_directory = './ckpts/{}/'.format(style_name)
     if not os.path.exists(ckpt_directory):
         os.makedirs(ckpt_directory)
 
@@ -141,7 +144,12 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
     tf.global_variables_initializer().run()
 
     if ckpt:
-        saver.restore(sess, ckpt_directory + ckpt_file_name +  '-{}'.format(ckpt))
+        if ckpt < 0:
+            checkpoint = tf.train.get_checkpoint_state(ckpt_directory)
+            input_checkpoint = checkpoint.model_checkpoint_path
+        else:
+            input_checkpoint =  ckpt_directory + style_name + '-{}'.format(ckpt)
+        saver.restore(sess, input_checkpoint)
         print ('Checkpoint {} restored.'.format(ckpt))
 
     for epoch in range(1, epochs + 1):
@@ -153,24 +161,9 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
             feed_dict = {inputs: imgs, target: styles_np}
             loss_, _= sess.run([loss, train_step,], feed_dict=feed_dict)
             print('[epoch {}/{}] batch {}/{}... loss: {}'.format(epoch, epochs, i + 1, iterations, loss_[0]))    
-        saver.save(sess, ckpt_directory + ckpt_file_name, global_step=epoch)
-        saver.export_meta_graph(filename='test_save_graph')
+        saver.save(sess, ckpt_directory + style_name, global_step=epoch)
 
-    # for var in tf.global_variables():
-    #     var_list[var.name] = var.eval()
-
-
-# graph = tf.Graph()
-# with graph.as_default():
-#     with tf.device(device_):
-#         inputs = tf.placeholder(tf.float32, shape=[1, 224, 224, 3], name='input')
-#         # feed dictionary into Transform Net, "train=False" would save all values as constants.
-#         transform = FastStyleNet(train=False, data_dict=var_list)
-#         outputs = transform(inputs)
-#     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)) as sess:
-
-#         save_path = './graphs/'
-#         if not os.path.exists(save_path):
-#             os.makedirs(save_path)
-#         print('saving pb...')
-#         tf.train.write_graph(sess.graph_def, save_path, args.output + '.pb', as_text=False)
+if save_pb:
+    if not os.path.exists('./pbs'):
+        os.makedirs('./pbs')
+    freeze_graph(ckpt_directory, './pbs/{}'.format(style_name), 'output')
