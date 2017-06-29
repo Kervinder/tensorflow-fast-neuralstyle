@@ -27,29 +27,31 @@ In this implementation, the VGG model part was based on [Tensorflow VGG16 and VG
 ## Train
 Need to train one image transformation network model per one style target.
 According to the paper, the models are trained on the [Microsoft COCO dataset](http://mscoco.org/dataset/#download). 
-Also, it will save the transformation model, including the trained weights, for later use (in C++) in ```graphs``` directory, while the checkpoint files would be saved in ```models``` directory. 
+Also, it will save the transformation model, including the trained weights, for later use (in C++) in ```pbs``` directory, while the checkpoint files would be saved in ```ckpts/<style_name>/```. 
 
-**NOTES!**
-Due to the new version of tensorflow, the checkpoint files containing weights would look something like `<model_name>.data-xxxx-of-xxxxx`. For a morde detailed description, refer to the [official page](https://www.tensorflow.org/api_docs/python/tf/train/Saver).
 
+- ```<style_name>.pb``` is saved by default. To turn off, add argument ```-pb 0```.
+- To train a model from scratch.
+```
+python train.py -s <style_image_path> -d <training_dataset_directory> -g 0
 
 ```
-python train.py -s <style_image_path> -d <training_dataset_path> -g 0
+- To load a pre-trained model, specify the checkpoint to load. Negative checkpoint value suggests using the latest checkpoint.
+```
+python train.py -s <style_image_path> -d  <training_dataset_directory> -c <checkpoint_to_load>
 ```
 
 ## Generate
 
-**NOTES!**
-1. Please provide the model **DIRECTORY** instead of model file. 
-2. Make sure you put postfix for your output image. (E.g. *.jpg, *.png...etc.)
-
+- Load from .pb file is currently not supported yet.
+- By default, the latest checkpoint file is used (negative value for the checkpoint argument). 
 ```
-python generate.py <input_image_path> -m <model_directory> -o <output_image_path>
+python generate.py <input_image_path> -s <style_name> -o <output_image_path> -c <checkpoint_to_load>
 ```
 
 ## Difference from paper
 - Convolution kernel size 4 instead of 3.
-- Training with batchsize(n>=2) causes unstable result.
+- Training with batchsize(n >= 2) causes unstable result.
 
 ## License
 MIT
