@@ -23,33 +23,34 @@ content_image_path = args.input
 style_name = args.style
 ckpt = args.ckpt
 load_with_pb = args.pb
+gpu = args.gpu
 
 original_image = Image.open(content_image_path).convert('RGB')
 
 img = np.asarray(original_image.resize((224, 224)), dtype=np.float32)
 shaped_input = img.reshape((1,) + img.shape)
 
-if args.gpu > -1:
-    device_ = '/gpu:{}'.format(args.gpu)
-    print(device_)
+if gpu > -1:
+    device = '/gpu:{}'.format(gpu)
 else:
-    device_ = '/cpu:0'
+    device = '/cpu:0'
 
 
-with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+with tf.device(device):
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 
-    if ckpt < 0:
-        checkpoint = tf.train.get_checkpoint_state('./ckpts/{}/'.format(style_name))
-        input_checkpoint = checkpoint.model_checkpoint_path
-    else:
-        input_checkpoint = './ckpts/{}/{}-{}'.format(style_name, style_name, ckpt)
-    saver = tf.train.import_meta_graph(input_checkpoint + '.meta')
-    saver.restore(sess, input_checkpoint)
+        if ckpt < 0:
+            checkpoint = tf.train.get_checkpoint_state('./ckpts/{}/'.format(style_name))
+            input_checkpoint = checkpoint.model_checkpoint_path
+        else:
+            input_checkpoint = './ckpts/{}/{}-{}'.format(style_name, style_name, ckpt)
+        saver = tf.train.import_meta_graph(input_checkpoint + '.meta')
+        saver.restore(sess, input_checkpoint)
 
-    graph = tf.get_default_graph()
-    input_image = graph.get_tensor_by_name('input:0')
-    output = graph.get_tensor_by_name('output:0')
-    out = sess.run(output, feed_dict={input_image: shaped_input})
+        graph = tf.get_default_graph()
+        input_image = graph.get_tensor_by_name('input:0')
+        output = graph.get_tensor_by_name('output:0')
+        out = sess.run(output, feed_dict={input_image: shaped_input})
     
 out = out.reshape((out.shape[1:]))
 im = Image.fromarray(np.uint8(out))

@@ -65,6 +65,7 @@ lambda_f = args.lambda_feat
 lambda_s = args.lambda_style
 style_image = args.style_image
 save_pb = args.pb
+gpu = args.gpu
 
 style_name, _ = os.path.splitext(style_image.split(os.sep)[-1])
 
@@ -84,12 +85,11 @@ style_np = np.asarray(Image.open(style_image).convert('RGB').resize((224, 224)),
 styles_np = [style_np for x in range(batchsize)]
 
 if gpu > -1:
-    device_ = '/gpu:{}'.format(gpu)
-    print(device_)
+    device = '/gpu:{}'.format(gpu)
 else:
-    device_ = '/cpu:0'
+    device = '/cpu:0'
 
-with tf.device(device_):
+with tf.device(device):
     
     inputs = tf.placeholder(tf.float32, shape=[batchsize, 224, 224, 3], name='input')
     net = FastStyleNet()
