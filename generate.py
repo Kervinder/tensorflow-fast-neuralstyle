@@ -11,7 +11,7 @@ parser.add_argument('--gpu', '-g', default=-1, type=int,
 parser.add_argument('--style', '-s', default=None, type=str, help='style model name')
 parser.add_argument('--ckpt', '-c', default=-1, type=int, help='checkpoint to be loaded')
 parser.add_argument('--out', '-o', default='stylized_image.jpg', type=str, help='stylized image\'s name')
-parser.add_argument('--pb', '-pb', dafault=False, type=bool, help='load with pb')
+parser.add_argument('--pb', '-pb', default=False, type=bool, help='load with pb')
 
 args = parser.parse_args()
 
@@ -38,18 +38,26 @@ else:
 
 with tf.device(device):
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+        if load_with_pb:
+            from tensorflow.core.framework import graph_pb2
+            graph_def = graph_pb2.GraphDef()
+            with open('./pbs/{}.pb'.format(style_name), "rb") as f:
+                graph_def.ParseFromString(f.read())
+            input_image, output = tf.import_graph_def(graph_def, return_elements=['input:0', 'output:0'])
 
-        if ckpt < 0:
-            checkpoint = tf.train.get_checkpoint_state('./ckpts/{}/'.format(style_name))
-            input_checkpoint = checkpoint.model_checkpoint_path
         else:
-            input_checkpoint = './ckpts/{}/{}-{}'.format(style_name, style_name, ckpt)
-        saver = tf.train.import_meta_graph(input_checkpoint + '.meta')
-        saver.restore(sess, input_checkpoint)
+            if ckpt < 0:
+                checkpoint = tf.train.get_checkpoint_state('./ckpts/{}/'.format(style_name))
+                input_checkpoint = checkpoint.model_checkpoint_path
+            else:
+                input_checkpoint = './ckpts/{}/{}-{}'.format(style_name, style_name, ckpt)
+            saver = tf.train.import_meta_graph(input_checkpoint + '.meta')
+            saver.restore(sess, input_checkpoint)
+            graph = tf.get_default_graph()
+            
+            input_image = graph.get_tensor_by_name('input:0')
+            output = graph.get_tensor_by_name('output:0')
 
-        graph = tf.get_default_graph()
-        input_image = graph.get_tensor_by_name('input:0')
-        output = graph.get_tensor_by_name('output:0')
         out = sess.run(output, feed_dict={input_image: shaped_input})
     
 out = out.reshape((out.shape[1:]))

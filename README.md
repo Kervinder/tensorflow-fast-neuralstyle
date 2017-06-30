@@ -43,7 +43,12 @@ python train.py -s <style_image_path> -d  <training_dataset_directory> -c <check
 
 ## Generate a stylized image
 
-- Load from .pb file is currently not supported yet.
+### Load with .pb file
+```
+python generate.py -i <input_image_path> -o <output_image_path> -s <style_name> -pb 1
+```
+
+### Load with checkpoint files
 - By default, the latest checkpoint file is used (negative value for the checkpoint argument). 
 ```
 python generate.py <input_image_path> -s <style_name> -o <output_image_path> -c <checkpoint_to_load>
