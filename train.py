@@ -166,4 +166,4 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 if save_pb:
     if not os.path.exists('./pbs'):
         os.makedirs('./pbs')
-    freeze_graph(ckpt_directory, './pbs/{}'.format(style_name), 'output')
+    freeze_graph(ckpt_directory, './pbs/{}.pb'.format(style_name), 'output')
