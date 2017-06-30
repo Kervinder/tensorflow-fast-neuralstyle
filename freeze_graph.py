@@ -43,4 +43,4 @@ def freeze_graph(model_folder, output_graph, output_node_name):
         # Finally we serialize and dump the output graph to the filesystem
         with tf.gfile.GFile(output_graph, "wb") as f:
             f.write(output_graph_def.SerializeToString())
-        print("%d ops in the final graph." % len(output_graph_def.node))
+        print("{} ops in the final graph.".format(len(output_graph_def.node)))
