@@ -1,13 +1,10 @@
 # Tensorflow implementation of "Perceptual Losses for Real-Time Style Transfer and Super-Resolution"
 Fast artistic style transfer by using feed forward network.
 
-<img src="https://github.com/cardinalblue/neural-style/blob/master/tf_version/sample_images/tubingen.jpg?raw=true" height="200px">
+<img src="https://github.com/antlerros/tensorflow-fast-neuralstyle/raw/master/images/content/tubingen.jpg" height="200px">
 
-<img src="https://github.com/cardinalblue/neural-style/blob/master/tf_version/sample_images/Matisse.jpg?raw=true" height="200px">
-<img src="https://github.com/cardinalblue/neural-style/blob/master/tf_version/sample_images/Matisse_output.jpg?raw=true" height="200px">
-
-<img src="https://github.com/cardinalblue/neural-style/blob/master/tf_version/sample_images/Robert_Delaunay,_1906,_Portrait_de_Metzinger,_oil_on_canvas,_55_x_43_cm,_DSC08255.jpg?raw=true" height="200px">
-<img src="https://github.com/cardinalblue/neural-style/blob/master/tf_version/sample_images/RobertD_output.jpg?raw=true" height="200px">
+<img src="https://github.com/antlerros/tensorflow-fast-neuralstyle/raw/master/images/styles/Robert_D.jpg" height="200px">
+<img src="https://github.com/antlerros/tensorflow-fast-neuralstyle/raw/master/images/output/RobertD_output.jpg" height="200px">
 
 - input image size: 1024x768
 - process time(CPU): 2.246 sec (Core i5-5257U)
@@ -62,7 +59,7 @@ python generate.py <input_image_path> -s <style_name> -o <output_image_path> -c 
 MIT
 
 ## Reference
-- [Perceptual Losses for Real-Time Style Transfer and Super-Resolution](http://arxiv.org/abs/1603.08155)
+- [Perceptual Losses for Real-Time Style Transfer and Super-Resolution](https://arxiv.org/abs/1603.08155)
 
 Codes written in this repository based on following nice works, thanks to the author.
 
